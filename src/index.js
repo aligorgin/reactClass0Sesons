@@ -1,17 +1,45 @@
-import React from 'react';
+import React from "react";
 import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import * as serviceWorker from './serviceWorker';
+import SeasonDisplay from "./SeasonDisplay";
+import Spinner from "./Spinner";
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+class App extends React.Component {
+    state = {lat: null, errorMessage: '', time: new Date().toLocaleTimeString()};
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();
+    componentDidMount() {
+        setInterval(() => {
+            this.setState({time: new Date().toLocaleTimeString()})
+        }, 1000);
+        window.navigator.geolocation.getCurrentPosition(
+            // when we update one of them , state system dont touch other one that's all
+            (position) => this.setState({lat: position.coords.latitude}),
+            (err) => this.setState({errorMessage: err.message})
+        );
+    }
+
+    renderContent() {
+        if (this.state.errorMessage && !this.state.lat) {
+            return <div>Error : {this.state.errorMessage}</div>
+        }
+
+        if (!this.state.errorMessage && this.state.lat) {
+            return (
+                <SeasonDisplay lat={this.state.lat}/>
+            );
+        }
+        return <Spinner message='please allow us to access your location'/>
+    }
+
+    // React says we have to define render!
+    render() {
+        return (
+            <div className='border red'>
+                <div>{this.renderContent()}</div>
+                <div>time is : {this.state.time}</div>
+            </div>
+        );
+    }
+}
+
+
+ReactDOM.render(<App/>, document.querySelector('#root'));
